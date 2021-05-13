@@ -50,7 +50,8 @@ const useStyles = makeStyles((theme) => ({
     width: '100%'
   },
   resultsArea: {
-    height: '140vw',
+    height: '65vh',
+    overflowY: 'scroll'
   }
 }));
 export default function App() {
@@ -62,7 +63,7 @@ export default function App() {
   const [bottomValue, setBottomValue] = useState(0)
   const [showFooter, setShowFooter] = useState(true)
   const [emptyView, setEmptyView] = useState(null)
-
+  const [errorMessage, setErrorMessage] = useState(null)
   useEffect(() => {
     if (getMobileOperatingSystem() === 'Android') {
       alert('You can download the app where it can give you notifications if vaccine is available\nCheck the top right button after clicking Ok')
@@ -100,18 +101,24 @@ export default function App() {
     fetch(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${getFormattedDate()}`, { mode: 'cors' })
       .then(resp => {
         setLoading(false)
-        if (resp.status != 200) throw new Error(resp.status)
-        resp.json().then(j => {
-          const centers = j['centers']
-          setData(centers)
-          setEmptyView(centers.length === 0)
-        })
+        if (resp.status != 200) {
+          return resp.json().then(j => {
+            throw j
+          })
+        } else {
+          return resp.json()
+        }
+      })
+      .then(j => {
+        const centers = j['centers']
+        setData(centers)
+        setEmptyView(centers.length === 0)
         setShowFooter(false)
-
       })
       .catch(err => {
         setShowError(true)
         setLoading(false)
+        setErrorMessage(err.error || 'Some error occurred')
       })
   }
   const getResults = () => {
@@ -199,7 +206,7 @@ export default function App() {
           open={showError}
           onClose={() => setShowError(false)}
           autoHideDuration={1000}
-          message='Some error occurred' />
+          message={errorMessage} />
       </div>
     </div >
   );

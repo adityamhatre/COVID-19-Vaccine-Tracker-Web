@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -61,6 +61,11 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [bottomValue, setBottomValue] = useState(0)
 
+  useEffect(()=>{
+    if(getMobileOperatingSystem()==='Android'){
+      alert('You can download the app where it can give you notifications if vaccine is available\nCheck the top right button after clicking Ok')
+    }
+  }, [])
   const getMobileOperatingSystem = () => {
     var userAgent = navigator.userAgent || navigator.vendor || window.opera;
     if (/windows phone/i.test(userAgent)) {

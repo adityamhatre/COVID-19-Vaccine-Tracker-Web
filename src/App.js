@@ -60,9 +60,11 @@ export default function App() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [bottomValue, setBottomValue] = useState(0)
+  const [showFooter, setShowFooter] = useState(true)
+  const [emptyView, setEmptyView] = useState(null)
 
-  useEffect(()=>{
-    if(getMobileOperatingSystem()==='Android'){
+  useEffect(() => {
+    if (getMobileOperatingSystem() === 'Android') {
       alert('You can download the app where it can give you notifications if vaccine is available\nCheck the top right button after clicking Ok')
     }
   }, [])
@@ -92,11 +94,20 @@ export default function App() {
   }
   const checkPincode = () => {
     setLoading(true)
+    setData([])
+    setShowFooter(true)
+    setEmptyView(false)
     fetch(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${getFormattedDate()}`, { mode: 'cors' })
       .then(resp => {
         setLoading(false)
         if (resp.status != 200) throw new Error(resp.status)
-        resp.json().then(j => setData(j['centers']))
+        resp.json().then(j => {
+          const centers = j['centers']
+          setData(centers)
+          setEmptyView(centers.length === 0)
+        })
+        setShowFooter(false)
+
       })
       .catch(err => {
         setShowError(true)
@@ -144,12 +155,19 @@ export default function App() {
           Search
 </Button>
 
+        {emptyView && <div>No availability</div>}
+
+
         {loading && <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'center', marginTop: 50 }}>
           <CircularProgress />
         </div>}
 
         <div className={classes.resultsArea}>{getResults()}</div>
 
+        {showFooter && <div style={{ bottom: '60px', position: 'absolute', width: '95vw' }}>
+          <center>Made by Aditya Rajesh Mhatre<br />Find me on FB/ Instagram/ LinkedIn
+          </center>
+        </div>}
         <BottomNavigation
           style={{
             width: '100%',

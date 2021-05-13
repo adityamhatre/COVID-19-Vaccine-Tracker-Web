@@ -1,1 +1,1 @@
-# Hacked together a qucik web app
+# Hacked together a quick web app

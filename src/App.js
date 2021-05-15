@@ -64,10 +64,6 @@ export default function App() {
   const [isIndia, setIsIndia] = useState(true)
 
   useEffect(() => {
-    if (getMobileOperatingSystem() === 'Android') {
-      alert('You can download the app where it can give you notifications if vaccine is available\nCheck the top right button after clicking Ok')
-    }
-
     fetch('https://ipapi.co/json/')
       .then(resp => resp.json())
       .then(r => {
@@ -78,6 +74,9 @@ export default function App() {
         } else {
           setErrorMessage(null)
           setIsIndia(true)
+          if (getMobileOperatingSystem() === 'Android') {
+            alert('You can download the app where it can give you notifications if vaccine is available\nCheck the top right button after clicking Ok')
+          }
         }
       })
   }, [])
@@ -158,7 +157,16 @@ export default function App() {
           <Typography className={classes.title}>
             COVID-19 Vaccine Tracker
         </Typography>
-          {isUsingAndroid() && <Button color='inherit' onClick={() => window.location.href = '/app-release.apk'}><AndroidIcon style={{ marginRight: 8 }} /> app <GetAppIcon style={{ marginLeft: 8 }} /></Button>}
+          {isUsingAndroid() && <Button color='inherit' onClick={() => {
+            if (isIndia) {
+              window.location.href = '/app-release.apk'
+            } else {
+              setErrorMessage('You need to be in India for this app to work.')
+              setShowError(true)
+              setIsIndia(false)
+              return
+            }
+          }}><AndroidIcon style={{ marginRight: 8 }} /> app <GetAppIcon style={{ marginLeft: 8 }} /></Button>}
         </Toolbar>
       </AppBar>
       <div style={{ padding: 10 }}>

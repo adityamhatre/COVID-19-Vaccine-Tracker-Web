@@ -62,7 +62,6 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [bottomValue, setBottomValue] = useState(0)
   const [showFooter, setShowFooter] = useState(true)
-  const [emptyView, setEmptyView] = useState(null)
   const [errorMessage, setErrorMessage] = useState()
   const [isIndia, setIsIndia] = useState(true)
 
@@ -108,6 +107,7 @@ export default function App() {
     const year = toTwoDigit(date.getFullYear())
     return `${day}-${month}-${year}`
   }
+
   const checkPincode = () => {
     if (!isIndia) {
       setErrorMessage('You need to be in India for this app to work.')
@@ -118,7 +118,7 @@ export default function App() {
     setLoading(true)
     setData([])
     setShowFooter(true)
-    setEmptyView(false)
+
     fetch(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${getFormattedDate()}`, { mode: 'cors' })
       .then(resp => {
         setLoading(false)
@@ -133,17 +133,18 @@ export default function App() {
       .then(j => {
         const centers = j['centers']
         setData(centers)
-        setEmptyView(centers.length === 0)
         setShowFooter(false)
       })
       .catch(err => {
+        setData(null)
         setShowError(true)
         setLoading(false)
         setErrorMessage(err.error || 'Some error occurred')
       })
   }
+
   const getResults = () => {
-    if (!data) return;
+    if (!data) return null;
     const results = data.map(it => <Card key={it.center_id} className={classes.card_root}>
       <CardContent>
         <Typography style={{ fontSize: 22 }}>
@@ -162,6 +163,7 @@ export default function App() {
         </Typography>
       </CardContent>
     </Card>)
+
     if (results.length == 0) {
       return <div>No availability</div>
     } else {
@@ -198,14 +200,11 @@ export default function App() {
           Search
 </Button>
 
-        {emptyView && <div>No availability</div>}
-
-
         {loading && <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'center', marginTop: 50 }}>
           <CircularProgress />
         </div>}
 
-        <div className={classes.resultsArea}>{getResults()}</div>
+        {!loading && <div className={classes.resultsArea}>{getResults()}</div>}
 
         {showFooter && <div style={{ bottom: '60px', position: 'absolute', width: '95vw' }}>
           <center>Made by Aditya Rajesh Mhatre<br />Find me on FB/ Instagram/ LinkedIn

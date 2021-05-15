@@ -57,15 +57,31 @@ export default function App() {
   const classes = useStyles();
   const [pincode, setPincode] = useState()
   const [showError, setShowError] = useState(false)
-  const [data, setData] = useState([])
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bottomValue, setBottomValue] = useState(0)
+  const [errorMessage, setErrorMessage] = useState()
+  const [isIndia, setIsIndia] = useState(true)
 
-  useEffect(()=>{
-    if(getMobileOperatingSystem()==='Android'){
+  useEffect(() => {
+    if (getMobileOperatingSystem() === 'Android') {
       alert('You can download the app where it can give you notifications if vaccine is available\nCheck the top right button after clicking Ok')
     }
+
+    fetch('https://ipapi.co/json/')
+      .then(resp => resp.json())
+      .then(r => {
+        if (r.country !== 'IN') {
+          setErrorMessage('You need to be in India for this app to work.')
+          setShowError(true)
+          setIsIndia(false)
+        } else {
+          setErrorMessage(null)
+          setIsIndia(true)
+        }
+      })
   }, [])
+
   const getMobileOperatingSystem = () => {
     var userAgent = navigator.userAgent || navigator.vendor || window.opera;
     if (/windows phone/i.test(userAgent)) {
@@ -91,6 +107,12 @@ export default function App() {
     return `${day}-${month}-${year}`
   }
   const checkPincode = () => {
+    if (!isIndia) {
+      setErrorMessage('You need to be in India for this app to work.')
+      setShowError(true)
+      setIsIndia(false)
+      return
+    }
     setLoading(true)
     fetch(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${getFormattedDate()}`, { mode: 'cors' })
       .then(resp => {
@@ -104,7 +126,8 @@ export default function App() {
       })
   }
   const getResults = () => {
-    return data.map(it => <Card key={it.center_id} className={classes.card_root}>
+    if (!data) return;
+    const results = data.map(it => <Card key={it.center_id} className={classes.card_root}>
       <CardContent>
         <Typography style={{ fontSize: 22 }}>
           {it.name}
@@ -122,6 +145,11 @@ export default function App() {
         </Typography>
       </CardContent>
     </Card>)
+    if (results.length == 0) {
+      return <div>No availability</div>
+    } else {
+      return results
+    }
   }
   return (
     <div >
@@ -179,9 +207,9 @@ export default function App() {
             horizontal: 'center',
           }}
           open={showError}
-          onClose={() => setShowError(false)}
-          autoHideDuration={1000}
-          message='Some error occurred' />
+          onClose={() => { setShowError(false) }}
+          autoHideDuration={2000}
+          message={errorMessage || 'Some error occurred'} />
       </div>
     </div >
   );

@@ -50,7 +50,8 @@ const useStyles = makeStyles((theme) => ({
     width: '100%'
   },
   resultsArea: {
-    height: '140vw',
+    height: '65vh',
+    overflowY: 'scroll'
   }
 }));
 export default function App() {
@@ -60,6 +61,8 @@ export default function App() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bottomValue, setBottomValue] = useState(0)
+  const [showFooter, setShowFooter] = useState(true)
+  const [emptyView, setEmptyView] = useState(null)
   const [errorMessage, setErrorMessage] = useState()
   const [isIndia, setIsIndia] = useState(true)
 
@@ -113,15 +116,30 @@ export default function App() {
       return
     }
     setLoading(true)
+    setData([])
+    setShowFooter(true)
+    setEmptyView(false)
     fetch(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${getFormattedDate()}`, { mode: 'cors' })
       .then(resp => {
         setLoading(false)
-        if (resp.status != 200) throw new Error(resp.status)
-        resp.json().then(j => setData(j['centers']))
+        if (resp.status != 200) {
+          return resp.json().then(j => {
+            throw j
+          })
+        } else {
+          return resp.json()
+        }
+      })
+      .then(j => {
+        const centers = j['centers']
+        setData(centers)
+        setEmptyView(centers.length === 0)
+        setShowFooter(false)
       })
       .catch(err => {
         setShowError(true)
         setLoading(false)
+        setErrorMessage(err.error || 'Some error occurred')
       })
   }
   const getResults = () => {
@@ -180,12 +198,19 @@ export default function App() {
           Search
 </Button>
 
+        {emptyView && <div>No availability</div>}
+
+
         {loading && <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'center', marginTop: 50 }}>
           <CircularProgress />
         </div>}
 
         <div className={classes.resultsArea}>{getResults()}</div>
 
+        {showFooter && <div style={{ bottom: '60px', position: 'absolute', width: '95vw' }}>
+          <center>Made by Aditya Rajesh Mhatre<br />Find me on FB/ Instagram/ LinkedIn
+          </center>
+        </div>}
         <BottomNavigation
           style={{
             width: '100%',
@@ -215,7 +240,7 @@ export default function App() {
             horizontal: 'center',
           }}
           open={showError}
-          onClose={() => { setShowError(false) }}
+          onClose={() => setShowError(false)}
           autoHideDuration={2000}
           message={errorMessage || 'Some error occurred'} />
       </div>
